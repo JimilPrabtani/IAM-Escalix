@@ -1,0 +1,29 @@
+{
+  "tool": "iam-escalix",
+  "version": "0.1.0",
+  "timestamp_utc": "2026-10-21T13:13:29.609543+00:00",
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "temperature": 0.1,
+  "platform": "AWS",
+  "mode": "offline",
+  "policies_file": ".\\examples\\sample_policies_alt.json",
+  "prompt_sha256": "90f8cff6d4719c87ccec8d6392136aa5d31e78b71218aa06159a4c5d8c22b9c7",
+  "raw_response": "{\"paths\": [{\"path\": \"arn:aws:iam::999999999999:user/mallory-iam:PassRole+lambda:CreateFunction+lambda:UpdateFunctionCode->arn:aws:iam::999999999999:role/PrivilegedLambdaRole\", \"source_type\": \"user\", \"target\": \"arn:aws:iam::999999999999:role/PrivilegedLambdaRole\", \"policy_type\": \"managed\", \"policy\": \"lambda:CreateFunction, lambda:UpdateFunctionCode, iam:PassRole\", \"risk\": \"Mallory can create or update Lambda functions and pass any IAM role to them because iam:PassRole is allowed on resource role/*. By passing PrivilegedLambdaRole as a Lambda execution role, mallory can execute code with AdministratorAccess if the role trust policy permits the Lambda service. This is an indirect escalation path that does not require direct sts:AssumeRole on mallory. The current trust policy limits assumption to the account root, but the broad iam:PassRole permission makes this path exploitable if the trust policy is broadened or misconfigured.\", \"mitigation\": \"Restrict iam:PassRole to specific role ARNs rather than role/*. Scope lambda:CreateFunction and lambda:UpdateFunctionCode to specific function resources. Limit PrivilegedLambdaRole trust policy to the required service principal only, such as lambda.amazonaws.com, and remove the account root principal. Attach a permission boundary to mallory to prevent further privilege escalation.\", \"all_principals\": \"arn:aws:iam::999999999999:user/mallory\"}], \"summary\": \"The account contains a single IAM user, mallory, whose LambdaDeployer managed policy grants lambda:CreateFunction, lambda:UpdateFunctionCode, and iam:PassRole on all roles. Combined with PrivilegedLambdaRole, which is assigned AdministratorAccess, this creates a PassRole-to-Lambda privilege escalation path. Although mallory lacks direct sts:AssumeRole and the role trust policy currently allows only the account root, the ability to pass any role to a Lambda service represents a significant indirect escalation risk if trust policies are altered. No permission boundaries or restrictive inline policies are present to contain mallory's effective permissions.\"}",
+  "parsed": {
+    "paths": [
+      {
+        "path": "arn:aws:iam::999999999999:user/mallory-iam:PassRole+lambda:CreateFunction+lambda:UpdateFunctionCode->arn:aws:iam::999999999999:role/PrivilegedLambdaRole",
+        "source_type": "user",
+        "target": "arn:aws:iam::999999999999:role/PrivilegedLambdaRole",
+        "policy_type": "managed",
+        "policy": "lambda:CreateFunction, lambda:UpdateFunctionCode, iam:PassRole",
+        "risk": "Mallory can create or update Lambda functions and pass any IAM role to them because iam:PassRole is allowed on resource role/*. By passing PrivilegedLambdaRole as a Lambda execution role, mallory can execute code with AdministratorAccess if the role trust policy permits the Lambda service. This is an indirect escalation path that does not require direct sts:AssumeRole on mallory. The current trust policy limits assumption to the account root, but the broad iam:PassRole permission makes this path exploitable if the trust policy is broadened or misconfigured.",
+        "mitigation": "Restrict iam:PassRole to specific role ARNs rather than role/*. Scope lambda:CreateFunction and lambda:UpdateFunctionCode to specific function resources. Limit PrivilegedLambdaRole trust policy to the required service principal only, such as lambda.amazonaws.com, and remove the account root principal. Attach a permission boundary to mallory to prevent further privilege escalation.",
+        "all_principals": "arn:aws:iam::999999999999:user/mallory"
+      }
+    ],
+    "summary": "The account contains a single IAM user, mallory, whose LambdaDeployer managed policy grants lambda:CreateFunction, lambda:UpdateFunctionCode, and iam:PassRole on all roles. Combined with PrivilegedLambdaRole, which is assigned AdministratorAccess, this creates a PassRole-to-Lambda privilege escalation path. Although mallory lacks direct sts:AssumeRole and the role trust policy currently allows only the account root, the ability to pass any role to a Lambda service represents a significant indirect escalation risk if trust policies are altered. No permission boundaries or restrictive inline policies are present to contain mallory's effective permissions."
+  },
+  "parse_ok": true
+}

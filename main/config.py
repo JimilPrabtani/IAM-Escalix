@@ -30,17 +30,11 @@ class Provider:
 
 
 PROVIDERS: dict[str, Provider] = {
-    "opencode": Provider(
-        name="opencode",
-        base_url="https://opencode.ai/inference/openai/v1",
-        api_key_env="OPENCODE_API_KEY",
-        default_model="deepseek-v4.1-flash-free",
-    ),
     "openrouter": Provider(
         name="openrouter",
         base_url="https://openrouter.ai/api/v1",
         api_key_env="OPENROUTER_API_KEY",
-        default_model="nvidia/nemotron-3-super-120b-a12b:free",
+        default_model="nvidia/nemotron-3.5-super-vl:free",
     ),
     "ollama": Provider(
         name="ollama",

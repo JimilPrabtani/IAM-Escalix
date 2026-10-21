@@ -8,13 +8,13 @@ have - along with risk explanations and mitigations.
 
 Analyses AWS IAM and Azure RBAC configurations with a large language model and
 reports the paths by which a principal could gain privileges it should not have.
-Runs against **any OpenAI-compatible LLM backend** (OpenCode, OpenRouter,
-Ollama, OpenAI) and supports fully offline analysis of stored IAM snapshots.
+Runs against **any OpenAI-compatible LLM backend** (OpenRouter, Ollama, OpenAI)
+and supports fully offline analysis of stored IAM snapshots.
 
 ## Features
 
 - Identifies potential privilege escalation paths in **AWS IAM** policies (Azure RBAC ported, best-effort)
-- Works with **OpenCode, OpenRouter, local Ollama, or OpenAI** - switch with `--provider`
+- Works with **OpenRouter, local Ollama, or OpenAI** - switch with `--provider`
 - **Offline mode**: analyze a stored policy snapshot with no cloud credentials
 - Returns escalation paths, risks and mitigations as **JSON**, saved to a report file
 
@@ -40,9 +40,9 @@ Copy-Item .env.example .env
 ### 1. Offline mode (no cloud account needed)
 
 ```powershell
-iam-escalix --provider opencode --platform AWS `
+iam-escalix --provider openrouter --platform AWS `
   --policies-file examples/sample_policies.json `
-  --output reports/opencode-deepseek.json
+  --output reports/openrouter-run.json
 ```
 
 The `--policies-file` accepts a JSON snapshot shaped like the data collected from
@@ -58,17 +58,16 @@ Requires IAM read access on a **sandbox** account. Minimum permissions:
 
 ```powershell
 # via AWS CLI profile (recommended; keeps secrets out of the CLI)
-iam-escalix --provider opencode --platform AWS --profile sandbox --output reports/aws-sandbox.json
+iam-escalix --provider openrouter --platform AWS --profile sandbox --output reports/aws-sandbox.json
 
 # or via explicit keys (goes into shell history - avoid on shared systems)
-iam-escalix --provider opencode --platform AWS -k AKIA... -s <secret> --output reports/aws.json
+iam-escalix --provider openrouter --platform AWS -k AKIA... -s <secret> --output reports/aws.json
 ```
 
 ### Providers
 
 | Provider | `--provider` | API key env var | Default model |
 |---|---|---|---|
-| OpenCode Console | `opencode` | `OPENCODE_API_KEY` | `deepseek-v4.1-flash-free` |
 | OpenRouter | `openrouter` | `OPENROUTER_API_KEY` | `nvidia/nemotron-3-super-120b-a12b:free` |
 | Ollama (local) | `ollama` | none | `qwen2.5:7b-instruct` |
 | OpenAI | `openai` | `OPENAI_API_KEY` | `gpt-4o-mini` |
@@ -89,9 +88,8 @@ exact prompt sent to the model (may contain sensitive policy data - use with car
 - Sending IAM policy JSON to a hosted LLM **is data egress**: with synthetic or
   sandbox data this is fine, but production policies may contain sensitive
   details. Prefer the offline mode, or a local Ollama model, for private data.
-- Some free hosted models may train on your data. The OpenCode free models used
-  by default (`deepseek-v4.1-flash-free`, `glm-5.3-flash-free`) are documented
-  zero-retention by the OpenCode Console at time of writing - verify before use.
+- Some free hosted models may train on your data. Verify the retention policy
+  of your chosen OpenRouter model before sending real policy data.
 - API keys are read from environment variables, never logged, and should never
   be committed. Command-line `--api-key` overrides end up in shell history.
 

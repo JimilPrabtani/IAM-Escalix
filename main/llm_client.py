@@ -1,8 +1,8 @@
 """LLM client used to analyse IAM policy prompts.
 
 Wraps langchain_openai.ChatOpenAI so any OpenAI-compatible endpoint can be
-used (OpenCode, OpenRouter, Ollama, OpenAI). Surfaces failures as
-LLMClientError instead of silently returning None.
+used (OpenRouter, Ollama, OpenAI). Surfaces failures as LLMClientError
+instead of silently returning None.
 """
 
 from __future__ import annotations

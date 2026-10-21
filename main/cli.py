@@ -1,8 +1,8 @@
 """IAM-Escalix command line interface.
 
 Credentials come from environment variables / --api-key (never a positional
-argument). Supports --provider/--model for OpenCode, OpenRouter, Ollama and
-OpenAI; --policies-file / --policies-dir for offline analysis of stored IAM
+argument). Supports --provider/--model for OpenRouter, Ollama and OpenAI;
+--policies-file / --policies-dir for offline analysis of stored IAM
 snapshots; results are parsed and written to a JSON report.
 """
 
@@ -32,8 +32,8 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument(
         "--provider",
         choices=sorted(PROVIDERS),
-        default="opencode",
-        help="LLM backend to use (default: opencode)",
+        default="openrouter",
+        help="LLM backend to use (default: openrouter)",
     )
     parser.add_argument("--model", type=str, default=None, help="Model id (defaults per provider)")
     parser.add_argument(
