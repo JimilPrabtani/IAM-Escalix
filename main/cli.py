@@ -1,11 +1,9 @@
 """IAM-Escalix command line interface.
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21:
-- the OpenAI API key is no longer a required positional argument; credentials
-  come from environment variables / --api-key
-- added --provider/--model for OpenCode, OpenRouter, Ollama and OpenAI
-- added --policies-file for offline analysis of a stored IAM snapshot
-- results are parsed and written to a JSON report instead of only being logged
+Credentials come from environment variables / --api-key (never a positional
+argument). Supports --provider/--model for OpenCode, OpenRouter, Ollama and
+OpenAI; --policies-file / --policies-dir for offline analysis of stored IAM
+snapshots; results are parsed and written to a JSON report.
 """
 
 from __future__ import annotations
@@ -55,13 +53,19 @@ def parse_args(argv=None) -> argparse.Namespace:
         help="Platform to analyze (AWS or AZURE)",
     )
 
-    # Offline mode
+    # Offline mode (one or more snapshots; supports multiple audits)
     parser.add_argument(
         "--policies-file",
+        nargs="+",
+        default=None,
+        help="Offline mode: analyze one or more stored IAM policy snapshots (JSON). "
+        "Multiple files are audited in sequence (one report per file).",
+    )
+    parser.add_argument(
+        "--policies-dir",
         type=str,
         default=None,
-        help="Offline mode: analyze a stored IAM policy snapshot (JSON) instead of "
-        "querying a live cloud account",
+        help="Offline mode: audit every *.json snapshot in a directory (multiple audits).",
     )
 
     # Output
@@ -128,12 +132,15 @@ def extract_json(text: str | None):
     return None, False
 
 
-def build_prompt(args: argparse.Namespace):
+def build_prompt(args: argparse.Namespace, policies_file: str | None = None):
     """Collect IAM data and build the analysis prompt. Returns (prompt, mode)."""
-    if args.policies_file:
+    pf = policies_file
+    if pf is None and args.policies_file:
+        pf = args.policies_file[0]
+    if pf:
         from cloud.fixture import Fixture
 
-        return Fixture(args.policies_file).start(), "offline"
+        return Fixture(pf).start(), "offline"
 
     if args.platform == "AZURE":
         from cloud.azure import Azure  # lazy: needs adal + network
@@ -146,19 +153,30 @@ def build_prompt(args: argparse.Namespace):
     return AWS(args=args).start(), "live"
 
 
-def main(argv=None) -> int:
-    args = parse_args(argv)
+def resolve_audit_files(args: argparse.Namespace) -> list[str]:
+    """Resolve the list of offline snapshot files to audit (may be empty)."""
+    files: list[str] = []
+    if args.policies_dir:
+        d = Path(args.policies_dir)
+        if not d.is_dir():
+            raise FileNotFoundError(f"Policies directory not found: {d}")
+        files.extend(str(p) for p in sorted(d.glob("*.json")))
+    if args.policies_file:
+        files.extend(args.policies_file)
+    # de-duplicate while preserving order
+    seen: set[str] = set()
+    unique: list[str] = []
+    for f in files:
+        if f not in seen:
+            seen.add(f)
+            unique.append(f)
+    return unique
 
+
+def run_one(args, policies_file, provider, model, api_key, output_path):
+    """Run a single audit (online or offline) and write its report. Returns exit code."""
     try:
-        provider, model, api_key = resolve_provider(args.provider, args.model, args.api_key)
-    except ProviderError as exc:
-        print(f"[error] {exc}")
-        return 1
-
-    print(f"[*] provider={provider.name} model={model} endpoint={provider.base_url or 'default'}")
-
-    try:
-        prompt, mode = build_prompt(args)
+        prompt, mode = build_prompt(args, policies_file=policies_file)
     except FileNotFoundError as exc:
         print(f"[error] {exc}")
         return 1
@@ -197,33 +215,71 @@ def main(argv=None) -> int:
     else:
         print(answer)
 
-    if args.output:
-        report = {
-            "tool": "iam-escalix",
-            "version": __version__,
-            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-            "provider": provider.name,
-            "model": model,
-            "temperature": args.temperature,
-            "platform": args.platform,
-            "mode": mode,
-            "policies_file": args.policies_file,
-            "prompt_sha256": prompt_sha256,
-            "raw_response": answer,
-            "parsed": parsed,
-            "parse_ok": parse_ok,
-        }
-        output_path = Path(args.output)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
-        print(f"\n[*] report written to {output_path}")
+    report = {
+        "tool": "iam-escalix",
+        "version": __version__,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "provider": provider.name,
+        "model": model,
+        "temperature": args.temperature,
+        "platform": args.platform,
+        "mode": mode,
+        "policies_file": policies_file,
+        "prompt_sha256": prompt_sha256,
+        "raw_response": answer,
+        "parsed": parsed,
+        "parse_ok": parse_ok,
+    }
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print(f"\n[*] report written to {output_path}")
 
-        if args.save_prompt:
-            prompt_path = output_path.with_suffix(".prompt.txt")
-            prompt_path.write_text(prompt, encoding="utf-8")
-            print(f"[*] prompt written to {prompt_path}")
+    if args.save_prompt:
+        prompt_path = output_path.with_suffix(".prompt.txt")
+        prompt_path.write_text(prompt, encoding="utf-8")
+        print(f"[*] prompt written to {prompt_path}")
 
     return 0 if parse_ok else 2
+
+
+def main(argv=None) -> int:
+    args = parse_args(argv)
+
+    try:
+        provider, model, api_key = resolve_provider(args.provider, args.model, args.api_key)
+    except ProviderError as exc:
+        print(f"[error] {exc}")
+        return 1
+
+    print(f"[*] provider={provider.name} model={model} endpoint={provider.base_url or 'default'}")
+
+    # Resolve the set of offline snapshots to audit (empty => live platform).
+    try:
+        audit_files = resolve_audit_files(args)
+    except FileNotFoundError as exc:
+        print(f"[error] {exc}")
+        return 1
+
+    if not audit_files:
+        # Single live audit.
+        rc = run_one(args, None, provider, model, api_key, args.output or "reports/live.json")
+        return rc
+
+    # Multiple audits: one report per snapshot.
+    if len(audit_files) == 1 and args.output:
+        targets = [(audit_files[0], args.output)]
+    else:
+        out_dir = Path(args.output) if args.output else Path("reports")
+        targets = [(f, str(out_dir / (Path(f).stem + ".json"))) for f in audit_files]
+
+    overall = 0
+    for policies_file, output_path in targets:
+        print(f"\n===== auditing {policies_file} =====")
+        rc = run_one(args, policies_file, provider, model, api_key, output_path)
+        if rc != 0:
+            overall = rc
+    return overall
 
 
 if __name__ == "__main__":

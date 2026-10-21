@@ -1,5 +1,5 @@
 """Cloud identity collectors for IAM-Escalix.
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21: moved from the
-original top-level `cloud` package; base class relocated to cloud/base.py.
+Each collector gathers IAM data for a platform and returns the fully
+formatted analysis prompt. Offline replay is provided by cloud.fixture.
 """

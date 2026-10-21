@@ -1,7 +1,8 @@
 """Provider registry and configuration resolution.
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21: this file is new.
-Replaces the hard-coded OpenAI client so any OpenAI-compatible backend works.
+Maps a provider name to its OpenAI-compatible endpoint, API key env var and
+default model. Resolves env-var based credentials (optionally overridden via
+--api-key) so no secrets end up on the command line.
 """
 
 from __future__ import annotations

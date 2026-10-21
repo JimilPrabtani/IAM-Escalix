@@ -1,91 +1,249 @@
 {
-  "arn:aws:iam::123456789012:user/alice": {
-    "Policy": [
-      {
-        "arn:aws:iam::123456789012:policy/KeyManager": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Sid": "KeyManagement",
-              "Effect": "Allow",
-              "Action": [
-                "iam:CreateAccessKey",
-                "iam:ListUsers",
-                "iam:GetUser"
-              ],
-              "Resource": "*"
-            }
-          ]
+  "account_id": "123456789012",
+  "users": {
+    "arn:aws:iam::123456789012:user/alice": {
+      "user_name": "alice",
+      "groups": [],
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::123456789012:policy/KeyManager",
+          "name": "KeyManager",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "KeyManagement",
+                "Effect": "Allow",
+                "Action": [
+                  "iam:CreateAccessKey",
+                  "iam:ListUsers",
+                  "iam:GetUser"
+                ],
+                "Resource": "*"
+              }
+            ]
+          }
         }
-      }
-    ]
+      ],
+      "inline_policies": [],
+      "permission_boundary": null
+    },
+    "arn:aws:iam::123456789012:user/bob": {
+      "user_name": "bob",
+      "groups": [],
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::123456789012:policy/InstanceLauncher",
+          "name": "InstanceLauncher",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "LaunchInstances",
+                "Effect": "Allow",
+                "Action": [
+                  "ec2:RunInstances"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Sid": "PassAnyRole",
+                "Effect": "Allow",
+                "Action": [
+                  "iam:PassRole"
+                ],
+                "Resource": "arn:aws:iam::123456789012:role/*"
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": [],
+      "permission_boundary": null
+    },
+    "arn:aws:iam::123456789012:user/carol": {
+      "user_name": "carol",
+      "groups": [],
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::123456789012:policy/PolicyEditor",
+          "name": "PolicyEditor",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "AttachAndEditPolicies",
+                "Effect": "Allow",
+                "Action": [
+                  "iam:AttachUserPolicy",
+                  "iam:PutUserPolicy",
+                  "iam:ListPolicies",
+                  "iam:GetPolicy"
+                ],
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": [],
+      "permission_boundary": null
+    },
+    "arn:aws:iam::123456789012:user/dave": {
+      "user_name": "dave",
+      "groups": [],
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::123456789012:policy/RoleSwitcher",
+          "name": "RoleSwitcher",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "AssumeSandboxAdmin",
+                "Effect": "Allow",
+                "Action": [
+                  "sts:AssumeRole"
+                ],
+                "Resource": "arn:aws:iam::123456789012:role/SandboxAdmin"
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": [],
+      "permission_boundary": null
+    },
+    "arn:aws:iam::123456789012:user/eve": {
+      "user_name": "eve",
+      "groups": [
+        "arn:aws:iam::123456789012:group/Developers"
+      ],
+      "attached_managed_policies": [],
+      "inline_policies": [],
+      "permission_boundary": "arn:aws:iam::123456789012:policy/ReadOnlyBoundary"
+    }
   },
-  "arn:aws:iam::123456789012:user/bob": {
-    "Policy": [
-      {
-        "arn:aws:iam::123456789012:policy/InstanceLauncher": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Sid": "LaunchInstances",
-              "Effect": "Allow",
-              "Action": [
-                "ec2:RunInstances"
-              ],
-              "Resource": "*"
+  "groups": {
+    "arn:aws:iam::123456789012:group/Developers": {
+      "group_name": "Developers",
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::aws:policy/ReadOnlyAccess",
+          "name": "ReadOnlyAccess",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "ReadOnly",
+                "Effect": "Allow",
+                "Action": [
+                  "s3:GetObject",
+                  "s3:ListBucket",
+                  "ec2:DescribeInstances"
+                ],
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": [
+        {
+          "name": "DevInline",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "DevInlineAllow",
+                "Effect": "Allow",
+                "Action": [
+                  "logs:CreateLogGroup",
+                  "logs:PutLogEvents"
+                ],
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "permission_boundary": null
+    }
+  },
+  "roles": {
+    "arn:aws:iam::123456789012:role/SandboxAdmin": {
+      "role_name": "SandboxAdmin",
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "TrustDave",
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::123456789012:user/dave"
             },
-            {
-              "Sid": "PassAnyRole",
-              "Effect": "Allow",
-              "Action": [
-                "iam:PassRole"
-              ],
-              "Resource": "arn:aws:iam::123456789012:role/*"
-            }
-          ]
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::aws:policy/AdministratorAccess",
+          "name": "AdministratorAccess",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "Admin",
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
         }
-      }
-    ]
-  },
-  "arn:aws:iam::123456789012:user/carol": {
-    "Policy": [
-      {
-        "arn:aws:iam::123456789012:policy/PolicyEditor": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Sid": "AttachAndEditPolicies",
-              "Effect": "Allow",
-              "Action": [
-                "iam:AttachUserPolicy",
-                "iam:PutUserPolicy",
-                "iam:ListPolicies",
-                "iam:GetPolicy"
-              ],
-              "Resource": "*"
-            }
-          ]
+      ],
+      "inline_policies": [],
+      "permission_boundary": null
+    },
+    "arn:aws:iam::123456789012:role/LambdaExecution": {
+      "role_name": "LambdaExecution",
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "TrustLambdaService",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "name": "AWSLambdaBasicExecutionRole",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "Logs",
+                "Effect": "Allow",
+                "Action": [
+                  "logs:CreateLogGroup",
+                  "logs:CreateLogStream",
+                  "logs:PutLogEvents"
+                ],
+                "Resource": "*"
+              }
+            ]
+          }
         }
-      }
-    ]
-  },
-  "arn:aws:iam::123456789012:user/dave": {
-    "Policy": [
-      {
-        "arn:aws:iam::123456789012:policy/RoleSwitcher": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Sid": "AssumeSandboxAdmin",
-              "Effect": "Allow",
-              "Action": [
-                "sts:AssumeRole"
-              ],
-              "Resource": "arn:aws:iam::123456789012:role/SandboxAdmin"
-            }
-          ]
-        }
-      }
-    ]
+      ],
+      "inline_policies": [],
+      "permission_boundary": null
+    }
   }
 }

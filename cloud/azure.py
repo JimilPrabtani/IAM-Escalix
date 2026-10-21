@@ -1,10 +1,9 @@
 """Azure AD collector (lazy-imported; requires the `adal` extra).
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21: constants were kept
-local to this module instead of a separate const package, and imports were
-updated for the main/cloud package split. Note: uses username/password (ROPC)
-authentication, which most modern tenants block - the AWS path and the
-offline fixture mode are the supported paths for v1.
+Collects users, groups and directory roles from Azure AD via the Graph API and
+builds the analysis prompt. Uses username/password (ROPC) authentication,
+which most modern tenants block - the AWS path and the offline fixture mode are
+the supported paths for v1.
 """
 
 import json

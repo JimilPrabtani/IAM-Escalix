@@ -1,32 +1,9 @@
 IAM-Escalix
 Copyright (C) 2026 IAM-Escalix contributors
 
-IAM-Escalix is a fork of EscalateGPT:
+IAM-Escalix is released under the GNU General Public License, version 3 or
+later. See LICENSE.md for the full license text.
 
-    EscalateGPT - An AI-powered tool for discovering privilege escalation
-    opportunities in AWS IAM configurations
-    Copyright (C) Tenable, Inc.
-    https://github.com/tenable/EscalateGPT
-    Licensed under GPL-3.0-or-later
-
-Modifications made 2026-10-21 (see headers in each changed file):
-
-  * Renamed packages and CLI (EscalateGPT -> IAM-Escalix);
-    GPTClient -> LLMClient.
-  * Split the hard-coded OpenAI client into a provider abstraction
-    supporting any OpenAI-compatible endpoint (OpenCode, OpenRouter,
-    Ollama, OpenAI); API keys are read from the environment instead of
-    the command line.
-  * Added an offline mode (cloud/fixture.py + --policies-file) that
-    analyzes a stored IAM snapshot without cloud credentials.
-  * Parsed model output and added JSON report output (--output).
-  * Updated cloud/aws.py policy collection to key policies by user ARN
-    with full documents inline (the original keyed customer-managed
-    policies by policy ARN, losing user-policy association).
-  * Made the Azure collector lazily imported (requires `adal`, an
-    optional dependency).
-
-This program is distributed in the hope that it will be useful, but
+This software is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-General Public License in LICENSE.md for details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

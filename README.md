@@ -6,10 +6,10 @@ IAM-Escalix analyzes AWS IAM and Azure RBAC configurations with a large language
 model and reports the paths by which a user could gain privileges they should not
 have - along with risk explanations and mitigations.
 
-> Fork of Tenable's [EscalateGPT](https://github.com/tenable/EscalateGPT) (GPL-3.0),
-> reworked to run against **any OpenAI-compatible LLM backend** (OpenCode, OpenRouter,
-> Ollama, OpenAI) and to support fully offline analysis of stored IAM snapshots.
-> See [NOTICE](NOTICE) for the full modification list.
+Analyses AWS IAM and Azure RBAC configurations with a large language model and
+reports the paths by which a principal could gain privileges it should not have.
+Runs against **any OpenAI-compatible LLM backend** (OpenCode, OpenRouter,
+Ollama, OpenAI) and supports fully offline analysis of stored IAM snapshots.
 
 ## Features
 
@@ -97,8 +97,8 @@ exact prompt sent to the model (may contain sensitive policy data - use with car
 
 ## License
 
-GPL-3.0-or-later. See [LICENSE.md](LICENSE.md). This is a modified fork of
-Tenable's EscalateGPT - see [NOTICE](NOTICE).
+GPL-3.0-or-later. See [LICENSE.md](LICENSE.md). See [NOTICE](NOTICE) for
+third-party notices.
 
 ## Disclaimer
 

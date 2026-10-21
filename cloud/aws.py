@@ -1,17 +1,14 @@
 """AWS IAM collector: builds the escalation-analysis prompt.
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21:
-- imports updated for the main/cloud package split
-- policies are now keyed by USER ARN with full policy documents inline
-  (the original keyed customer-managed policies by policy ARN, which lost
-  the user-policy association the prompt asks the model to reason about);
-- AWS-managed policy documents are now fetched and inlined as well.
+Gathers users, groups and roles together with every attached policy type
+(managed, inline, permission boundaries) plus role trust policies, and formats
+them into the analysis prompt. Policies are keyed by principal ARN with full
+policy documents inline.
 """
 
 import os
 import sys
 import json
-from collections import defaultdict
 
 import boto3
 
@@ -39,30 +36,17 @@ class AWS(Cloud):
     def _connect(self, **kwargs):
         """
             Establishes a connection to AWS Identity and Access Management (IAM) service.
-            This function supports two modes of authentication:
-            1. Using an AWS CLI profile: Provide the 'profile' parameter with the desired AWS CLI profile name.
-            2. Using AWS access key and secret key: Provide 'aws_key' and 'aws_secret' parameters.
-
-            Note: Only one mode of authentication should be used at a time.
-
-            @param kwargs: Keyword arguments for specifying authentication parameters.
-                - If using a profile: {'profile': 'profile_name'}
-                - If using access key and secret key: {'aws_key': 'access_key', 'aws_secret': 'secret_key'}
-
-            @return: IAM client object for making API requests.
-            @rtype: boto3.client.IAM or None if connection fails.
+            Supports two modes: an AWS CLI profile, or access key + secret key.
             """
         try:
-            # Check if a profile is provided
             if kwargs.get('profile'):
                 self.logger.debug(
-                    f"Try to establishing connection to AWS' using the profile {kwargs.get('profile')}")
+                    f"Try to establishing connection to AWS using the profile {kwargs.get('profile')}")
                 session = boto3.Session(profile_name=kwargs.get('profile'))
                 return session.client("iam")
-            # Check if access key and secret key are provided
             if kwargs.get('aws_key') and kwargs.get('aws_secret'):
                 self.logger.debug(
-                    f"Try to establishing connection to AWS' using AWS key and AWS secret")
+                    "Try to establishing connection to AWS using AWS key and AWS secret")
                 return boto3.client("iam", aws_access_key_id=kwargs.get('aws_key'),
                                     aws_secret_access_key=kwargs.get('aws_secret'))
         except Exception as e:
@@ -71,46 +55,129 @@ class AWS(Cloud):
 
     def start(self) -> str:
         """
-        Collects the Attached Managed Policies for every user in the AWS account and
-        generates the prompt for the LLM.
-
-        @return: Prompt we want to send to the LLM
-        @rtype: str
+        Collects users, groups and roles with all their policy types and builds
+        the analysis prompt.
         """
-        users_policies: dict = defaultdict(lambda: {"Policy": []})
+        account_id = ""
+        result = {
+            "account_id": account_id,
+            "users": {},
+            "groups": {},
+            "roles": {},
+        }
+
         try:
-            aws_data = self.client.get_account_authorization_details()
             account_id = self._get_account_id()
-            self.logger.debug(f"Get all policies in account {account_id}")
-            for user in aws_data.get('UserDetailList', []):
-                user_arn = user.get("Arn", "unknown-user")
-                for policy in user.get('AttachedManagedPolicies', []):
-                    policy_arn = policy.get("PolicyArn")
-                    if not policy_arn:
-                        continue
-                    try:
-                        policy_document = self._extract_policy_document(policy_arn)
-                        users_policies[user_arn]["Policy"].append({policy_arn: policy_document})
-                    except ClientError as e:
-                        self.logger.error(f"Error while processing policy {policy_arn}: {e}")
-                    except Exception as e:
-                        self.logger.error(f"Unexpected error while processing policy {policy_arn}: {e}")
+            result["account_id"] = account_id
+            self.logger.debug(f"Collecting authorization details for account {account_id}")
+
+            details = self._get_all_authorization_details()
+
+            for user in details.get("UserDetailList", []):
+                arn = user.get("Arn", "unknown-user")
+                result["users"][arn] = {
+                    "user_name": user.get("UserName"),
+                    "groups": user.get("GroupList", []),
+                    "attached_managed_policies": self._managed_policy_docs(
+                        user.get("AttachedManagedPolicies", [])
+                    ),
+                    "inline_policies": self._inline_policy_docs(user.get("UserPolicyList", [])),
+                    "permission_boundary": self._boundary_doc(user.get("PermissionsBoundary")),
+                }
+
+            for group in details.get("GroupDetailList", []):
+                arn = group.get("Arn", "unknown-group")
+                result["groups"][arn] = {
+                    "group_name": group.get("GroupName"),
+                    "attached_managed_policies": self._managed_policy_docs(
+                        group.get("AttachedManagedPolicies", [])
+                    ),
+                    "inline_policies": self._inline_policy_docs(group.get("GroupPolicyList", [])),
+                    "permission_boundary": self._boundary_doc(group.get("PermissionsBoundary")),
+                }
+
+            for role in details.get("RoleDetailList", []):
+                arn = role.get("Arn", "unknown-role")
+                result["roles"][arn] = {
+                    "role_name": role.get("RoleName"),
+                    "trust_policy": role.get("AssumeRolePolicyDocument"),
+                    "attached_managed_policies": self._managed_policy_docs(
+                        role.get("AttachedManagedPolicies", [])
+                    ),
+                    "inline_policies": self._inline_policy_docs(role.get("RolePolicyList", [])),
+                    "permission_boundary": self._boundary_doc(role.get("PermissionsBoundary")),
+                }
+
         except ClientError as e:
             self.logger.error(f"Error while connecting to AWS: {e}")
         except Exception as e:
             self.logger.error(f"Unexpected error while connecting to AWS: {e}")
 
-        if not users_policies:
-            self.logger.error("No attached managed policies were collected; nothing to analyze.")
-        return PROMPTS['AWS'].format(json.dumps(users_policies, default=str, indent=2))
+        if not (result["users"] or result["groups"] or result["roles"]):
+            self.logger.error("No IAM principals were collected; nothing to analyze.")
+
+        return PROMPTS['AWS'].format(json.dumps(result, default=str, indent=2))
+
+    def _get_all_authorization_details(self) -> dict:
+        """Fetch all pages of GetAccountAuthorizationDetails."""
+        merged = {
+            "UserDetailList": [],
+            "GroupDetailList": [],
+            "RoleDetailList": [],
+            "Policies": [],
+        }
+        marker = None
+        while True:
+            kwargs = {}
+            if marker:
+                kwargs["Marker"] = marker
+            response = self.client.get_account_authorization_details(**kwargs)
+            for key in merged:
+                merged[key].extend(response.get(key, []))
+            marker = response.get("Marker")
+            if not marker:
+                break
+        return merged
+
+    def _managed_policy_docs(self, attached: list) -> list:
+        """Fetch full documents for attached managed policies."""
+        out = []
+        for policy in attached or []:
+            arn = policy.get("PolicyArn")
+            if not arn:
+                continue
+            try:
+                document = self._extract_policy_document(arn)
+                out.append({"arn": arn, "name": policy.get("PolicyName"), "document": document})
+            except ClientError as e:
+                self.logger.error(f"Error while processing policy {arn}: {e}")
+                out.append({"arn": arn, "name": policy.get("PolicyName"), "error": str(e)})
+            except Exception as e:
+                self.logger.error(f"Unexpected error while processing policy {arn}: {e}")
+                out.append({"arn": arn, "name": policy.get("PolicyName"), "error": str(e)})
+        return out
+
+    def _inline_policy_docs(self, policy_list: list) -> list:
+        """Inline policies already carry their document in the detail response."""
+        out = []
+        for policy in policy_list or []:
+            out.append({"name": policy.get("PolicyName"), "document": policy.get("PolicyDocument")})
+        return out
+
+    def _boundary_doc(self, boundary) -> dict | None:
+        if not boundary:
+            return None
+        arn = boundary.get("PermissionsBoundaryArn")
+        if not arn:
+            return boundary
+        try:
+            document = self._extract_policy_document(arn)
+            return {"arn": arn, "type": boundary.get("PermissionsBoundaryType"), "document": document}
+        except Exception as e:
+            self.logger.error(f"Error while processing permission boundary {arn}: {e}")
+            return {"arn": arn, "type": boundary.get("PermissionsBoundaryType"), "error": str(e)}
 
     def _get_account_id(self):
-        """
-            Retrieves the AWS account ID associated with the IAM user used for authentication.
-            This method makes a request to the IAM client to get details of the authenticated user and extracts
-            the account ID from the user's ARN (Amazon Resource Name). If successful, it returns the account ID;
-            otherwise, it returns an empty string.
-            """
         try:
             account_id = self.client.get_user()["User"]["Arn"].split("::")[1].split(":")[0]
         except Exception as e:
@@ -119,19 +186,7 @@ class AWS(Cloud):
         return account_id
 
     def _extract_policy_document(self, policy_arn):
-        """
-        Extracts the policy document statements associated with the specified IAM policy.
-        This method retrieves the policy version information using the provided policy ARN, and then
-        fetches the corresponding policy document. It returns the list of policy statements included
-        in the policy document.
-
-        @param policy_arn: ARN of the IAM policy.
-        @type policy_arn: str
-
-        @return: List of policy statements extracted from the policy document.
-        @rtype: List[Dict[str, Any]]
-        """
         policy_version = self.client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
         policy_document = \
             self.client.get_policy_version(PolicyArn=policy_arn, VersionId=policy_version)["PolicyVersion"]["Document"]
-        return policy_document["Statement"]
+        return policy_document

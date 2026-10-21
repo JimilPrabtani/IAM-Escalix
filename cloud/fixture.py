@@ -1,8 +1,7 @@
 """Offline collector: replays a stored IAM policy snapshot instead of a live cloud.
 
-New in IAM-Escalix (2026-10-21). Lets you exercise the full analysis pipeline
-without any cloud credentials - useful for safe testing and reproducible
-comparisons between models.
+Lets you exercise the full analysis pipeline without any cloud credentials -
+useful for safe testing and reproducible comparisons between models.
 """
 
 import json

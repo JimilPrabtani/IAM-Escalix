@@ -24,9 +24,7 @@ dependencies = [
 [project.optional-dependencies]
 azure = ["adal>=1.2.7"]
 
-[project.urls]
-Upstream = "https://github.com/tenable/EscalateGPT"
-
+# (no upstream URL; project is original)
 [project.scripts]
 iam-escalix = "main.cli:main"
 

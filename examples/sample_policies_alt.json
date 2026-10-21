@@ -1,0 +1,77 @@
+{
+  "account_id": "999999999999",
+  "users": {
+    "arn:aws:iam::999999999999:user/mallory": {
+      "user_name": "mallory",
+      "groups": [],
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::999999999999:policy/LambdaDeployer",
+          "name": "LambdaDeployer",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "DeployLambda",
+                "Effect": "Allow",
+                "Action": [
+                  "lambda:CreateFunction",
+                  "lambda:UpdateFunctionCode"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Sid": "PassLambdaRole",
+                "Effect": "Allow",
+                "Action": [
+                  "iam:PassRole"
+                ],
+                "Resource": "arn:aws:iam::999999999999:role/*"
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": [],
+      "permission_boundary": null
+    }
+  },
+  "groups": {},
+  "roles": {
+    "arn:aws:iam::999999999999:role/PrivilegedLambdaRole": {
+      "role_name": "PrivilegedLambdaRole",
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "TrustAnyPrincipalInAccount",
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::999999999999:root"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "attached_managed_policies": [
+        {
+          "arn": "arn:aws:iam::aws:policy/AdministratorAccess",
+          "name": "AdministratorAccess",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "Admin",
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": [],
+      "permission_boundary": null
+    }
+  }
+}

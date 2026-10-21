@@ -1,8 +1,8 @@
 """LLM client used to analyse IAM policy prompts.
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21: GPTClient renamed to
-LLMClient and now targets any OpenAI-compatible endpoint via base_url, with
-explicit errors instead of silently returning None.
+Wraps langchain_openai.ChatOpenAI so any OpenAI-compatible endpoint can be
+used (OpenCode, OpenRouter, Ollama, OpenAI). Surfaces failures as
+LLMClientError instead of silently returning None.
 """
 
 from __future__ import annotations

@@ -1,7 +1,6 @@
 """Shared stream logger.
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21: moved from
-const/my_logger.py to main/logger.py; behaviour unchanged.
+Writes DEBUG-level records to the console with a timestamp/level format.
 """
 
 import logging

@@ -1,7 +1,7 @@
 """Abstract base class for cloud identity collectors.
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21: moved from
-cloud/cloud.py; imports updated for the main/cloud package split.
+Each collector connects to its platform, gathers IAM data and returns the
+fully formatted analysis prompt.
 """
 
 from abc import ABC, abstractmethod

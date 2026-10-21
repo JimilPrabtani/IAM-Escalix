@@ -1,7 +1,8 @@
 """Prompt templates sent to the LLM.
 
-Modified from EscalateGPT (Tenable, GPL-3.0), 2026-10-21: added an explicit
-"return only JSON" instruction to the AWS prompt so responses parse reliably.
+Each template instructs the model to return only valid JSON so responses can be
+parsed and persisted. The AWS template covers users, groups, roles and all
+attached policy types (managed, inline, permission boundaries).
 """
 
 PROMPTS = {
@@ -29,23 +30,29 @@ Your output should be only the JSON
 User data JSON: {}
 Group owner data JSON: {}
 """,
-    "AWS": """Identify potential privilege escalation paths based on the provided IAM policies.
-The data maps each IAM user ARN to the managed policies attached to that user, with full policy documents inline.
-List users who can gain unauthorized access or elevated permissions, considering actions beyond direct access.
+    "AWS": """Identify potential privilege escalation paths in the following AWS IAM configuration.
 
-Present the findings as JSON, following this format:
+The data contains, per account:
+- users: each with attached managed policies, inline policies, permission boundary, and group memberships
+- groups: attached managed policies, inline policies, permission boundary
+- roles: trust policy (who may assume the role), attached managed policies, inline policies, permission boundary
+
+Consider ALL policy types: AWS-managed, customer-managed, inline, permission boundaries, and trust policies. Identify paths by which a principal can gain permissions it should not have, including indirect multi-step attacks such as:
+- iam:PassRole combined with a service action (ec2:RunInstances, lambda:CreateFunction, ...)
+- iam:CreateAccessKey on another user
+- iam:AttachUserPolicy / iam:PutUserPolicy / iam:AttachRolePolicy on self or others
+- sts:AssumeRole into a privileged role (cross-reference the role's trust policy and its own permissions)
+- permission-boundary bypass or removal
+- group/role membership abuse
+- trust-policy misconfiguration allowing cross-account or wildcard principals
+
+Aggregate principals with identical escalation capabilities. Propose practical mitigations.
+
+Return only valid JSON, with no commentary or markdown, in this format:
 {{"paths": [
-    {{"path": "[SourceUserName]-[PolicyAction]->[Target]", "policy": "PolicyAction", "risk": "Explain the risk associated with the path", "mitigation": "Provide mitigation steps to address the risk", "all_users": "List other users with similar permissions"}}
-]}}
+    {{"path": "[Source]-[Action]->[Target]", "source_type": "user|group|role", "target": "principal or resource", "policy_type": "managed|inline|boundary|trust", "policy": "Action", "risk": "Explain the risk", "mitigation": "Mitigation steps", "all_principals": "Other principals with the same capability"}}
+], "summary": "One-paragraph overview of the account's escalation posture"}}
 
-When analyzing:
-- Consider direct escalations and indirect multi-step attacks (for example PassRole combined with service actions such as ec2:RunInstances, or AttachUserPolicy used on the identity itself)
-- Aggregate users with identical escalation capabilities
-- Offer technically accurate and detailed explanations
-- Propose practical mitigation measures
-Return only valid JSON, with no commentary or markdown.
-Your output should be only the JSON
-
-Policies:
+Configuration:
 {}""",
 }
