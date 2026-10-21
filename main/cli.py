@@ -26,12 +26,12 @@ def parse_args(argv=None) -> argparse.Namespace:
     from main.banner import _ART, _COMMANDS, _TAGLINE
 
     parser = argparse.ArgumentParser(
-        prog="iam-escalix",
+        prog="escalix",
         description=f"{_ART}\n  {_TAGLINE}\n\nIAM-Escalix - AI-driven privilege escalation path discovery for cloud IAM",
         epilog=_COMMANDS,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--version", action="version", version=f"iam-escalix {__version__}")
+    parser.add_argument("--version", action="version", version=f"escalix {__version__}")
 
     # Model selection
     parser.add_argument(

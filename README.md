@@ -42,7 +42,7 @@ Copy-Item .env.example .env
 ### 1. Offline mode (no cloud account needed)
 
 ```powershell
-iam-escalix --provider openrouter --platform AWS `
+escalix --provider openrouter --platform AWS `
   --policies-file examples/sample_policies.json `
   --output reports/openrouter-run.json
 ```
@@ -60,10 +60,10 @@ Requires IAM read access on a **sandbox** account. Minimum permissions:
 
 ```powershell
 # via AWS CLI profile (recommended; keeps secrets out of the CLI)
-iam-escalix --provider openrouter --platform AWS --profile sandbox --output reports/aws-sandbox.json
+escalix --provider openrouter --platform AWS --profile sandbox --output reports/aws-sandbox.json
 
 # or via explicit keys (goes into shell history - avoid on shared systems)
-iam-escalix --provider openrouter --platform AWS -k AKIA... -s <secret> --output reports/aws.json
+escalix --provider openrouter --platform AWS -k AKIA... -s <secret> --output reports/aws.json
 ```
 
 ### Providers

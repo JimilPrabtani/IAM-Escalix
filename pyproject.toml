@@ -26,6 +26,7 @@ azure = ["adal>=1.2.7"]
 
 # (no upstream URL; project is original)
 [project.scripts]
+escalix = "main.cli:main"
 iam-escalix = "main.cli:main"
 
 [tool.setuptools]

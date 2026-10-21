@@ -16,13 +16,13 @@ _ART = r"""
   | | |___/ \___/ |___/|___||___| \___/ |___|
 """
 
-_TAGLINE = "IAM-Escalix - AI-driven privilege escalation path discovery for cloud IAM"
+_TAGLINE = "Escalix - AI-driven privilege escalation path discovery for cloud IAM"
 
 _COMMANDS = """Scan commands:
-  iam-escalix --provider openrouter --platform AWS --policies-file <snapshot.json> --output <report.json>
-  iam-escalix --policies-dir <dir> --output <dir>        (audit every *.json in a directory)
-  iam-escalix --provider ollama --platform AWS --policies-file <snapshot.json>   (offline, no API key)
-  iam-escalix --provider openai --platform AWS -P <aws-profile> --output <report.json>
+  escalix --provider openrouter --platform AWS --policies-file <snapshot.json> --output <report.json>
+  escalix --policies-dir <dir> --output <dir>        (audit every *.json in a directory)
+  escalix --provider ollama --platform AWS --policies-file <snapshot.json>   (offline, no API key)
+  escalix --provider openai --platform AWS -P <aws-profile> --output <report.json>
 
 Options:
   --model <id>        override the provider default model
