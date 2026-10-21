@@ -96,12 +96,6 @@ def parse_args(argv=None) -> argparse.Namespace:
     if args.platform == "AZURE" and not args.policies_file and not (args.username and args.password and args.tenant_id):
         parser.error("--platform AZURE requires --username, --password and --tenant-id "
                      "(or use --policies-file for offline mode)")
-    if args.platform == "AWS" and not args.policies_file and not (
-        args.profile or (args.aws_key and args.aws_secret)
-    ):
-        # Neither CLI credentials nor a profile: cloud.aws can still fall back
-        # to AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY environment variables.
-        pass
     return args
 
 
