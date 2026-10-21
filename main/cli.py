@@ -17,14 +17,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from main import __version__
+from main.banner import print_banner
 from main.config import DEFAULT_TEMPERATURE, PROVIDERS, ProviderError, resolve_provider
 from main.llm_client import LLMClient, LLMClientError
 
 
 def parse_args(argv=None) -> argparse.Namespace:
+    from main.banner import _ART, _COMMANDS, _TAGLINE
+
     parser = argparse.ArgumentParser(
         prog="iam-escalix",
-        description="IAM-Escalix - AI-driven privilege escalation path discovery for cloud IAM",
+        description=f"{_ART}\n  {_TAGLINE}\n\nIAM-Escalix - AI-driven privilege escalation path discovery for cloud IAM",
+        epilog=_COMMANDS,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--version", action="version", version=f"iam-escalix {__version__}")
 
@@ -239,6 +244,8 @@ def run_one(args, policies_file, provider, model, api_key, output_path):
 
 def main(argv=None) -> int:
     args = parse_args(argv)
+
+    print_banner()
 
     try:
         provider, model, api_key = resolve_provider(args.provider, args.model, args.api_key)

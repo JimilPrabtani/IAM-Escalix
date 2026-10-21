@@ -1,5 +1,7 @@
 # IAM-Escalix
 
+![IAM-Escalix banner](assets/banner.svg)
+
 **AI-driven privilege escalation path discovery for cloud IAM.**
 
 IAM-Escalix analyzes AWS IAM and Azure RBAC configurations with a large language

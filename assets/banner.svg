@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="200" viewBox="0 0 760 200" role="img" aria-label="IAM-Escalix banner">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00d4ff"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#ff00aa"/>
+    </linearGradient>
+  </defs>
+  <rect width="760" height="200" fill="#0d1117" rx="14"/>
+  <text x="24" y="34" font-family="Consolas, 'Courier New', monospace" font-size="15" fill="url(#g)" xml:space="preserve">
+    <tspan x="24" dy="0">  ___  ___  _   _  ___  ___  ___  _   _  ___</tspan>
+    <tspan x="24" dy="18"> |_ _||   \| | | |/ __|| __|| __|| | | || __|</tspan>
+    <tspan x="24" dy="18">  | | | |) | |_| |\__ \| _| | _| | |_| || _ |</tspan>
+    <tspan x="24" dy="18">  | | |___/ \___/ |___/|___||___| \___/ |___|</tspan>
+  </text>
+  <text x="24" y="132" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="700" fill="url(#g)">IAM-Escalix</text>
+  <text x="24" y="156" font-family="Consolas, 'Courier New', monospace" font-size="12" fill="#8b949e">AI-driven privilege escalation path discovery for cloud IAM</text>
+  <text x="24" y="178" font-family="Consolas, 'Courier New', monospace" font-size="11" fill="#58a6ff">OpenRouter  |  Ollama  |  OpenAI  |  offline snapshots  |  JSON reports</text>
+</svg>
