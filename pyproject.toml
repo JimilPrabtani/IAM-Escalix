@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iam-escalix"
+version = "0.1.0"
+description = "AI-driven privilege escalation path discovery for cloud IAM"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE.md" }
+authors = [{ name = "IAM-Escalix contributors" }]
+dependencies = [
+  "boto3>=1.35",
+  "botocore>=1.35",
+  "langchain>=0.3",
+  "langchain-openai>=0.2",
+  "langchain-core>=0.3",
+  "openai>=1.68",
+  "requests>=2.31",
+  "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+azure = ["adal>=1.2.7"]
+
+[project.urls]
+Upstream = "https://github.com/tenable/EscalateGPT"
+
+[project.scripts]
+iam-escalix = "main.cli:main"
+
+[tool.setuptools]
+packages = ["main", "cloud"]

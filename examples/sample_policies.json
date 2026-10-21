@@ -1,0 +1,91 @@
+{
+  "arn:aws:iam::123456789012:user/alice": {
+    "Policy": [
+      {
+        "arn:aws:iam::123456789012:policy/KeyManager": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "KeyManagement",
+              "Effect": "Allow",
+              "Action": [
+                "iam:CreateAccessKey",
+                "iam:ListUsers",
+                "iam:GetUser"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "arn:aws:iam::123456789012:user/bob": {
+    "Policy": [
+      {
+        "arn:aws:iam::123456789012:policy/InstanceLauncher": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "LaunchInstances",
+              "Effect": "Allow",
+              "Action": [
+                "ec2:RunInstances"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "PassAnyRole",
+              "Effect": "Allow",
+              "Action": [
+                "iam:PassRole"
+              ],
+              "Resource": "arn:aws:iam::123456789012:role/*"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "arn:aws:iam::123456789012:user/carol": {
+    "Policy": [
+      {
+        "arn:aws:iam::123456789012:policy/PolicyEditor": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AttachAndEditPolicies",
+              "Effect": "Allow",
+              "Action": [
+                "iam:AttachUserPolicy",
+                "iam:PutUserPolicy",
+                "iam:ListPolicies",
+                "iam:GetPolicy"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "arn:aws:iam::123456789012:user/dave": {
+    "Policy": [
+      {
+        "arn:aws:iam::123456789012:policy/RoleSwitcher": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AssumeSandboxAdmin",
+              "Effect": "Allow",
+              "Action": [
+                "sts:AssumeRole"
+              ],
+              "Resource": "arn:aws:iam::123456789012:role/SandboxAdmin"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
